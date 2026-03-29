@@ -1,8 +1,14 @@
 # rpn-calc
-Reverse Polish Notation calculator. Zero dependencies.
+
+Reverse Polish Notation calculator
+
 ## Usage
+
 ```bash
-python3 rpn_calc.py "3 4 + 2 *"    # 14.0
-python3 rpn_calc.py "9 sqrt"       # 3.0
-python3 rpn_calc.py                 # interactive mode
+python3 rpn_calc.py --help
 ```
+
+## Features
+
+- Zero dependencies (Python 3.8+)
+- Single file implementation

@@ -1,41 +1,28 @@
 #!/usr/bin/env python3
-"""Reverse Polish Notation (RPN) calculator."""
-import sys, math, operator
-
-OPS = {'+':operator.add, '-':operator.sub, '*':operator.mul, '/':operator.truediv,
-       '//':operator.floordiv, '%':operator.mod, '**':operator.pow,
-       'sqrt':lambda s: [math.sqrt(s.pop())], 'sin':lambda s: [math.sin(s.pop())],
-       'cos':lambda s: [math.cos(s.pop())], 'abs':lambda s: [abs(s.pop())],
-       'swap':lambda s: [s[-1], s[-2]] if len(s)>=2 else s, 'dup':lambda s: [s[-1], s[-1]]}
-
-def evaluate(expr):
-    stack = []
-    for token in expr.split():
-        if token in OPS:
-            op = OPS[token]
-            if callable(op) and token in ('sqrt','sin','cos','abs'):
-                result = op(stack)
-                stack.extend(result)
-            elif token == 'swap':
-                if len(stack) >= 2: stack[-1], stack[-2] = stack[-2], stack[-1]
-            elif token == 'dup':
-                stack.append(stack[-1])
-            else:
-                b, a = stack.pop(), stack.pop()
-                stack.append(op(a, b))
-        else:
-            stack.append(float(token))
-    return stack[-1] if stack else 0
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        print(evaluate(' '.join(sys.argv[1:])))
-    else:
-        print("RPN Calculator (Ctrl+D to quit)")
-        stack = []
-        while True:
-            try:
-                line = input('> ')
-                print(evaluate(line))
-            except EOFError:
-                break
+"""rpn_calc - RPN calculator."""
+import sys,argparse,json,math
+OPS={"+":lambda a,b:a+b,"-":lambda a,b:a-b,"*":lambda a,b:a*b,"/":lambda a,b:a/b,"**":lambda a,b:a**b,"%":lambda a,b:a%b}
+FUNCS={"sqrt":math.sqrt,"sin":math.sin,"cos":math.cos,"tan":math.tan,"log":math.log,"ln":math.log,"abs":abs,"floor":math.floor,"ceil":math.ceil}
+def evaluate(tokens):
+    stack=[];history=[]
+    for t in tokens:
+        if t in OPS:
+            b,a=stack.pop(),stack.pop();r=OPS[t](a,b);stack.append(r)
+            history.append({"op":t,"args":[a,b],"result":r})
+        elif t in FUNCS:
+            a=stack.pop();r=FUNCS[t](a);stack.append(r)
+            history.append({"op":t,"args":[a],"result":r})
+        elif t=="pi":stack.append(math.pi)
+        elif t=="e":stack.append(math.e)
+        else:stack.append(float(t))
+    return stack,history
+def main():
+    p=argparse.ArgumentParser(description="RPN calculator")
+    p.add_argument("expression",nargs="+")
+    p.add_argument("--verbose",action="store_true")
+    args=p.parse_args()
+    stack,history=evaluate(args.expression)
+    result={"result":stack[-1] if stack else None,"stack":stack}
+    if args.verbose:result["history"]=history
+    print(json.dumps(result,indent=2))
+if __name__=="__main__":main()
